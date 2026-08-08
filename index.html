@@ -156,18 +156,18 @@ h1,h2,h3,p{margin:0}
 .hero-h1 em{font-style:italic; color:var(--ivory)}
 .hero-h1 .strike, .hero-h1 .ins{white-space:nowrap}
 
-.hero-lower{display:grid; grid-template-columns:minmax(240px,32ch) minmax(0,1fr);
-  gap:clamp(24px,4vw,56px); align-items:center; margin-top:clamp(-30px,-3vh,-10px)}
+.hero-lower{display:grid; grid-template-columns:minmax(240px,34ch) minmax(0,1fr);
+  gap:clamp(24px,4vw,56px); align-items:center; margin-top:clamp(16px,3vh,40px)}
 .hero-note{position:relative; z-index:3; padding-left:1.35em; max-width:42ch;
   color:var(--taupe); font-size:clamp(15px,1.15vw,17px); line-height:1.62}
 .hero-note .caret{position:absolute; left:0; top:.28em; width:.8em; height:.8em}
 .hero-note b{color:var(--ivory); font-weight:600}
 
-/* the paper document, tilted, bleeding off the right edge */
-.paper-stage{position:relative; z-index:2; min-height:clamp(230px,33vh,310px)}
+/* the paper document, tilted, sitting in the lower-right, clear of the headline */
+.paper-stage{position:relative; z-index:2; min-height:clamp(250px,34vh,330px)}
 .paper{
-  position:absolute; right:calc(var(--gutter) * -1.15); top:50%;
-  width:min(620px,122%); transform:translateY(-50%) rotate(-1.7deg);
+  position:absolute; right:0; top:50%;
+  width:min(440px,100%); transform:translateY(-50%) rotate(-1.7deg);
   background:
     radial-gradient(120% 140% at 18% 8%, var(--paper-hi), var(--paper) 46%, var(--paper-lo) 100%);
   color:var(--paper-ink);
@@ -362,10 +362,10 @@ h1,h2,h3,p{margin:0}
 /* ============================================================
    FOOTER — the wordmark anchored flush to the bottom, on top of grain
    ============================================================ */
-.foot{position:relative; background:var(--ink-floor); padding-top:clamp(56px,8vh,96px);
-  overflow:hidden}
+.foot{position:relative; background:var(--ink-floor);
+  padding:clamp(56px,8vh,96px) 0 clamp(48px,7vh,80px)}
 .foot-top{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);
-  gap:clamp(28px,4vw,56px); align-items:start; padding-bottom:clamp(44px,8vh,92px)}
+  gap:clamp(28px,4vw,56px); align-items:start}
 .foot-say{font-family:var(--serif); font-size:clamp(21px,2.3vw,29px); color:var(--ivory);
   max-width:20ch; line-height:1.24}
 .foot-say i{color:var(--pen-light)}
@@ -378,11 +378,6 @@ h1,h2,h3,p{margin:0}
 .foot-group a svg{width:16px; height:16px; fill:currentColor; flex:none}
 .colophon{font-family:var(--mono); font-size:11px; letter-spacing:.13em; text-transform:uppercase;
   color:var(--taupe-dim); margin-top:6px}
-.foot-mark{position:relative; font-family:var(--wordmark); color:var(--ivory);
-  font-size:clamp(76px,20vw,272px); line-height:.8; letter-spacing:-.012em;
-  margin:0; padding:0 0 0 var(--gutter); transform:translateY(.1em);
-  user-select:none; white-space:nowrap}
-.foot-mark .dot{color:var(--pen)}
 @media (max-width:720px){
   .foot-top{grid-template-columns:1fr; gap:clamp(26px,5vh,40px)}
   .foot-say{max-width:24ch}
@@ -437,9 +432,9 @@ h1,h2,h3,p{margin:0}
       <p class="hero-note">
         <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
         One plain file of ground rules your agent reads before it designs a page or
-        writes a line. So it makes <b>real choices</b> instead of the same gradients,
-        invented numbers, and <span class="strike">powerful, seamless</span> filler.
-        It sits on top of the rules your agent already has. It never fights them.
+        writes a line. So it makes <b>real choices</b> instead of reaching for the same
+        gradients, templates, and invented numbers. It sits on top of the rules your
+        agent already has. It never fights them.
       </p>
 
       <div class="paper-stage">
@@ -628,7 +623,6 @@ h1,h2,h3,p{margin:0}
       </div>
     </div>
   </div>
-  <div class="foot-mark" aria-hidden="true">Unslopify<span class="dot">.</span></div>
 </footer>
 
 </div><!-- /shell -->
