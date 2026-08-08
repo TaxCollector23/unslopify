@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 LAW=unslopify.md
 mkdir -p integrations/claude-code integrations/codex \
          integrations/cursor/.cursor/rules integrations/opencode \
-         integrations/gemini-cli integrations/github-copilot/.github
+         integrations/gemini-cli integrations/github-copilot
 
 hdr() {
 cat <<'EOF'
@@ -27,7 +27,9 @@ EOF
 { echo "# AGENTS.md"; echo; hdr; echo "---"; echo; cat "$LAW"; } > integrations/codex/AGENTS.md
 { echo "# AGENTS.md"; echo; hdr; echo "You can also add this file to the \`instructions\` array in \`opencode.json\`."; echo; echo "---"; echo; cat "$LAW"; } > integrations/opencode/AGENTS.md
 { echo "# GEMINI.md"; echo; hdr; echo "---"; echo; cat "$LAW"; } > integrations/gemini-cli/GEMINI.md
-{ echo "# Copilot instructions"; echo; hdr; echo "---"; echo; cat "$LAW"; } > integrations/github-copilot/.github/copilot-instructions.md
+# Served flat (not under .github/) because GitHub Pages strips .github/ dirs.
+# In your own repo this file belongs at .github/copilot-instructions.md.
+{ echo "# Copilot instructions"; echo; hdr; echo "---"; echo; cat "$LAW"; } > integrations/github-copilot/copilot-instructions.md
 { printf -- '---\ndescription: Unslopify — the anti-slop law for design, code, product, and agent behavior\nalwaysApply: true\n---\n\n'; hdr; echo "---"; echo; cat "$LAW"; } > integrations/cursor/.cursor/rules/unslopify.mdc
 
 echo "Rebuilt integration files from $LAW"

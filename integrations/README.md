@@ -12,7 +12,7 @@ your repository root.
 | Cursor | `cursor/.cursor/rules/unslopify.mdc` | `.cursor/rules/unslopify.mdc` |
 | opencode | `opencode/AGENTS.md` | `AGENTS.md` (or the `instructions` list in `opencode.json`) |
 | Gemini CLI | `gemini-cli/GEMINI.md` | `GEMINI.md` |
-| GitHub Copilot | `github-copilot/.github/copilot-instructions.md` | `.github/copilot-instructions.md` |
+| GitHub Copilot | `github-copilot/copilot-instructions.md` | `.github/copilot-instructions.md` |
 
 The law is a set of defaults. Each agent's own preset rules and your explicit
 instructions win wherever they genuinely conflict. It sits on top without

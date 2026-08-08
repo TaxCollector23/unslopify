@@ -21,7 +21,7 @@ your repository root:
 | Cursor | [`integrations/cursor/.cursor/rules/unslopify.mdc`](integrations/cursor/.cursor/rules/unslopify.mdc) | `.cursor/rules/unslopify.mdc` |
 | opencode | [`integrations/opencode/AGENTS.md`](integrations/opencode/AGENTS.md) | `AGENTS.md` |
 | Gemini CLI | [`integrations/gemini-cli/GEMINI.md`](integrations/gemini-cli/GEMINI.md) | `GEMINI.md` |
-| GitHub Copilot | [`integrations/github-copilot/.github/copilot-instructions.md`](integrations/github-copilot/.github/copilot-instructions.md) | `.github/copilot-instructions.md` |
+| GitHub Copilot | [`integrations/github-copilot/copilot-instructions.md`](integrations/github-copilot/copilot-instructions.md) | `.github/copilot-instructions.md` |
 
 Each file is self-contained: a short header telling the agent to follow the law,
 then the full law inline. Regenerate them from `unslopify.md` with `./build.sh`.
