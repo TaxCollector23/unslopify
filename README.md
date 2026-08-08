@@ -16,12 +16,12 @@ your repository root:
 
 | Agent | File | Put it at |
 | --- | --- | --- |
-| Claude Code | [`site/integrations/claude-code/CLAUDE.md`](site/integrations/claude-code/CLAUDE.md) | `CLAUDE.md` |
-| Codex | [`site/integrations/codex/AGENTS.md`](site/integrations/codex/AGENTS.md) | `AGENTS.md` |
-| Cursor | [`site/integrations/cursor/.cursor/rules/unslopify.mdc`](site/integrations/cursor/.cursor/rules/unslopify.mdc) | `.cursor/rules/unslopify.mdc` |
-| opencode | [`site/integrations/opencode/AGENTS.md`](site/integrations/opencode/AGENTS.md) | `AGENTS.md` |
-| Gemini CLI | [`site/integrations/gemini-cli/GEMINI.md`](site/integrations/gemini-cli/GEMINI.md) | `GEMINI.md` |
-| GitHub Copilot | [`site/integrations/github-copilot/copilot-instructions.md`](site/integrations/github-copilot/copilot-instructions.md) | `.github/copilot-instructions.md` |
+| Claude Code | [`docs/integrations/claude-code/CLAUDE.md`](docs/integrations/claude-code/CLAUDE.md) | `CLAUDE.md` |
+| Codex | [`docs/integrations/codex/AGENTS.md`](docs/integrations/codex/AGENTS.md) | `AGENTS.md` |
+| Cursor | [`docs/integrations/cursor/.cursor/rules/unslopify.mdc`](docs/integrations/cursor/.cursor/rules/unslopify.mdc) | `.cursor/rules/unslopify.mdc` |
+| opencode | [`docs/integrations/opencode/AGENTS.md`](docs/integrations/opencode/AGENTS.md) | `AGENTS.md` |
+| Gemini CLI | [`docs/integrations/gemini-cli/GEMINI.md`](docs/integrations/gemini-cli/GEMINI.md) | `GEMINI.md` |
+| GitHub Copilot | [`docs/integrations/github-copilot/copilot-instructions.md`](docs/integrations/github-copilot/copilot-instructions.md) | `.github/copilot-instructions.md` |
 
 Each file is self-contained: a short header telling the agent to follow the law,
 then the full law inline. Regenerate them from `unslopify.md` with `./build.sh`.
