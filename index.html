@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unslopify — the anti-slop law for AI coding agents</title>
+<meta name="description" content="One plain-language file of ground rules your AI coding agent reads before it designs or writes code, so it ships something deliberate instead of something plausible. Drop-in files for Claude Code, Codex, Cursor, opencode, Gemini CLI, and GitHub Copilot.">
+
+<style>
+/* ============================================================
+   TYPE  ·  self-hosted, off the Google shelf (Fontshare)
+   Gambarino = the wordmark logotype only.
+   Sentient  = the single editorial serif voice (display + document).
+   system-ui = neutral body / UI.  system mono = genuine file content.
+   ============================================================ */
+@font-face{
+  font-family:'Gambarino';
+  src:url('assets/fonts/gambarino-400.woff2') format('woff2');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Sentient';
+  src:url('assets/fonts/sentient-400.woff2') format('woff2');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Sentient';
+  src:url('assets/fonts/sentient-400-italic.woff2') format('woff2');
+  font-weight:400; font-style:italic; font-display:swap;
+}
+@font-face{
+  font-family:'Sentient';
+  src:url('assets/fonts/sentient-500.woff2') format('woff2');
+  font-weight:500; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Sentient';
+  src:url('assets/fonts/sentient-700.woff2') format('woff2');
+  font-weight:700; font-style:normal; font-display:swap;
+}
+
+:root{
+  /* warm ink world — not cool blue-charcoal, not cream, not slop-gray */
+  --ink:#17130c;
+  --ink-raised:#1c1710;
+  --ink-floor:#100c07;
+  --ivory:#f3eddf;
+  --taupe:#a89d84;
+  --taupe-dim:#7d7460;
+  /* the pen */
+  --pen:#c0402f;
+  --pen-light:#dc5c45;
+  --pen-deep:#8f2b20;
+  /* the document */
+  --paper:#e9dfc6;
+  --paper-hi:#f2ead6;
+  --paper-lo:#d8ccac;
+  --paper-ink:#2c2415;
+  --paper-mut:#6f6650;
+
+  --serif:'Sentient',Georgia,'Times New Roman',serif;
+  --wordmark:'Gambarino','Sentient',Georgia,serif;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+
+  --gutter:clamp(20px,5vw,84px);
+  --maxw:1240px;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--ivory);
+  font-family:var(--sans);
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+::selection{background:var(--pen);color:#fff}
+
+/* one continuous grain substrate, behind everything, never over text */
+.grain{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  opacity:.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.shell{position:relative; z-index:1}
+
+a{color:inherit}
+h1,h2,h3,p{margin:0}
+
+/* ---------- shared type helpers ---------- */
+.serif{font-family:var(--serif)}
+.mono{font-family:var(--mono)}
+.wrap{max-width:var(--maxw); margin:0 auto; padding-inline:var(--gutter)}
+
+/* the recurring bespoke mark: a proofreader's caret ‸, drawn not typed */
+.caret{display:inline-block; width:.62em; height:.62em; vertical-align:baseline}
+.caret path{fill:none; stroke:var(--pen-light); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round}
+
+/* the strike — a red pen line, optically centered on the x-height,
+   round caps, width-animated so caps never distort. Visible by default. */
+.strike{position:relative; white-space:nowrap}
+.strike::after{
+  content:""; position:absolute; left:-.06em; top:.58em;
+  height:.085em; min-height:2px; border-radius:3px;
+  background:var(--pen); width:calc(100% + .12em);
+  box-shadow:0 .5px 0 rgba(0,0,0,.15);
+  transition:width .68s cubic-bezier(.22,1,.36,1);
+}
+.strike.arm::after{width:0}          /* JS arms it, then releases to draw */
+.ins{color:var(--pen-light); font-style:italic; position:relative; white-space:nowrap}
+.ins .caret{margin-right:.06em; transform:translateY(.02em)}
+
+/* ============================================================
+   NAV — treated, contained, not a flush row
+   ============================================================ */
+.nav{
+  position:sticky; top:0; z-index:40;
+  backdrop-filter:blur(7px) saturate(115%);
+  background:linear-gradient(180deg, rgba(23,19,12,.86), rgba(23,19,12,.42));
+  border-bottom:1px solid rgba(233,223,198,.07);
+}
+.nav-in{display:flex; align-items:center; justify-content:space-between; height:66px}
+.brand{display:flex; align-items:baseline; gap:.5ch; font-family:var(--wordmark);
+  font-size:25px; letter-spacing:.005em; color:var(--ivory); text-decoration:none; line-height:1}
+.brand .dot{color:var(--pen-light)}
+.nav-right{display:flex; align-items:center; gap:clamp(14px,3vw,30px)}
+.nav-meta{font-family:var(--mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--taupe-dim)}
+@media (max-width:620px){ .nav-meta{display:none} }
+.nav-link{font-family:var(--sans); font-size:14.5px; color:var(--ivory); text-decoration:none;
+  display:inline-flex; align-items:center; gap:.5ch; padding:8px 2px; transition:color .2s}
+.nav-link .caret path{stroke:var(--taupe)}
+.nav-link:hover{color:var(--pen-light)}
+.nav-link:hover .caret path{stroke:var(--pen-light)}
+
+/* ============================================================
+   HERO — one edited manuscript, composed on a diagonal.
+   Headline (foreground) + marginalia note + the paper artifact
+   (midground) bleeding off the top-right edge.
+   ============================================================ */
+.hero{position:relative; min-height:calc(100svh - 66px); display:flex; flex-direction:column;
+  justify-content:center;
+  padding-top:clamp(30px,5vh,64px); padding-bottom:clamp(36px,7vh,86px);
+  background:radial-gradient(135% 105% at 8% -10%, #241d11 0%, #191510 46%, var(--ink) 78%);}
+.hero-wrap{width:100%}
+.hero-h1{position:relative; z-index:3; font-family:var(--serif); font-weight:500; color:var(--ivory);
+  font-size:clamp(38px,6vw,70px); line-height:1.05; letter-spacing:-.018em;
+  margin-bottom:clamp(20px,3vh,40px)}
+.hero-h1 .l2{white-space:nowrap}
+.hero-h1 em{font-style:italic; color:var(--ivory)}
+.hero-h1 .strike, .hero-h1 .ins{white-space:nowrap}
+
+.hero-lower{display:grid; grid-template-columns:minmax(240px,32ch) minmax(0,1fr);
+  gap:clamp(24px,4vw,56px); align-items:center; margin-top:clamp(-30px,-3vh,-10px)}
+.hero-note{position:relative; z-index:3; padding-left:1.35em; max-width:42ch;
+  color:var(--taupe); font-size:clamp(15px,1.15vw,17px); line-height:1.62}
+.hero-note .caret{position:absolute; left:0; top:.28em; width:.8em; height:.8em}
+.hero-note b{color:var(--ivory); font-weight:600}
+
+/* the paper document, tilted, bleeding off the right edge */
+.paper-stage{position:relative; z-index:2; min-height:clamp(230px,33vh,310px)}
+.paper{
+  position:absolute; right:calc(var(--gutter) * -1.15); top:50%;
+  width:min(620px,122%); transform:translateY(-50%) rotate(-1.7deg);
+  background:
+    radial-gradient(120% 140% at 18% 8%, var(--paper-hi), var(--paper) 46%, var(--paper-lo) 100%);
+  color:var(--paper-ink);
+  border-radius:3px;
+  padding:34px 38px 42px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.35) inset,           /* top light lip */
+    -14px 22px 40px -18px rgba(0,0,0,.55),          /* one directional cast */
+    0 2px 3px -1px rgba(0,0,0,.3);
+}
+.paper::after{ /* paper grain, on the substrate of the sheet */
+  content:""; position:absolute; inset:0; border-radius:3px; pointer-events:none;
+  opacity:.5; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.4'/%3E%3C/svg%3E");
+}
+.paper-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--paper-mut); border-bottom:1px solid rgba(44,36,21,.22); padding-bottom:11px; margin-bottom:18px}
+.paper-body{font-family:var(--serif); font-size:clamp(15px,1.5vw,18px); line-height:1.66}
+.paper-body p{margin-bottom:.85em}
+.paper-body .rule{font-weight:500}
+.fakes{display:flex; flex-wrap:wrap; gap:.15em .9em; margin:.15em 0 .55em;
+  font-family:var(--mono); font-size:.82em; color:var(--paper-mut)}
+.fakes .strike::after{background:var(--pen); top:.62em}
+.marginal{position:absolute; right:-6px; bottom:26px; transform:rotate(-1.7deg);
+  font-family:var(--serif); font-style:italic; color:var(--pen-deep); font-size:14px;
+  display:flex; align-items:center; gap:.4ch}
+.marginal .caret path{stroke:var(--pen)}
+
+@media (max-width:900px){
+  .hero{min-height:auto; padding-top:clamp(30px,6vh,60px); padding-bottom:clamp(48px,9vh,90px)}
+  .hero-h1{max-width:22ch; font-size:clamp(34px,7.6vw,60px)}
+  .hero-h1 .l2{white-space:normal}
+  .hero-lower{grid-template-columns:1fr; gap:clamp(30px,5vh,44px); margin-top:0}
+  .hero-note{max-width:52ch; order:1}
+  .paper-stage{min-height:0; order:2}
+  .paper{position:relative; right:auto; top:auto; transform:rotate(-1.2deg);
+    width:min(540px,100%); margin:0 auto}
+  .marginal{display:none}
+}
+@media (max-width:560px){
+  .hero-h1{max-width:none}
+  .hero-h1 br{display:none}
+}
+
+/* ============================================================
+   MANIFESTO — the long read. Warm ink; the red pen marks the
+   default it would otherwise reach for.
+   ============================================================ */
+.manifesto{position:relative; padding:clamp(74px,12vh,150px) 0 clamp(64px,10vh,120px);
+  background:linear-gradient(180deg, var(--ink) 0%, #1a160f 50%, var(--ink) 100%)}
+.man{max-width:770px; margin:0 auto}
+.man-lead{font-family:var(--serif); font-weight:500; color:var(--ivory);
+  font-size:clamp(29px,4vw,46px); line-height:1.08; letter-spacing:-.016em; max-width:16em}
+.man-p{color:var(--taupe); font-size:clamp(16px,1.25vw,18.5px); line-height:1.66; margin-top:22px; max-width:64ch}
+.man-p b{color:var(--ivory); font-weight:600}
+.man-em{font-family:var(--serif); font-weight:500; color:var(--ivory);
+  font-size:clamp(21px,2.5vw,29px); line-height:1.26; margin-top:26px; max-width:20em}
+.man-em .pen{color:var(--pen-light); font-style:italic}
+.man-beat{margin-top:clamp(54px,8vh,96px)}
+
+/* the "becomes" list — what it reaches for, struck in red */
+.becomes{margin:28px 0 0; padding:0; display:flex; flex-direction:column; gap:13px; max-width:62ch}
+.becomes li{list-style:none; font-size:clamp(16px,1.25vw,18.5px); color:var(--ivory); line-height:1.42}
+.becomes .strike{color:var(--taupe)}
+.becomes .strike::after{top:.64em; background:var(--pen)}
+
+/* why does this exist */
+.why{font-family:var(--serif); font-weight:500; font-style:italic; color:var(--ivory);
+  font-size:clamp(33px,5vw,62px); line-height:1.02; letter-spacing:-.02em; margin-top:6px}
+.branch{margin-top:28px; display:grid; gap:16px; max-width:64ch}
+.branch p{position:relative; padding-left:1.5em; font-size:clamp(16px,1.25vw,18px);
+  line-height:1.6; color:var(--taupe)}
+.branch b{font-weight:600}
+.branch .keep b{color:var(--ivory)}
+.branch .drop b{color:var(--pen-light)}
+.branch .mk{position:absolute; left:0; top:.34em; width:.85em; height:.85em}
+.branch .keep .mk path{stroke:var(--taupe)}
+.branch .drop .mk path{stroke:var(--pen-light)}
+
+.man-close{font-family:var(--serif); font-weight:500; color:var(--ivory);
+  font-size:clamp(42px,7vw,86px); line-height:1; letter-spacing:-.022em; margin-top:16px}
+.man-tag{margin-top:20px; font-family:var(--serif); font-size:clamp(20px,2.3vw,27px);
+  color:var(--taupe); line-height:1.32}
+.man-tag .anti{color:var(--pen-light); font-style:italic}
+
+/* ============================================================
+   AGENTS — "drop it in the file your agent already reads"
+   real marks, bare, one treatment, + a working install selector
+   ============================================================ */
+.agents{position:relative; padding:clamp(64px,10vh,128px) 0 clamp(56px,8vh,104px);
+  background:linear-gradient(180deg, var(--ink) 0%, var(--ink-raised) 100%)}
+.sec-lead{font-family:var(--serif); font-weight:500; color:var(--ivory);
+  font-size:clamp(26px,3.4vw,42px); line-height:1.12; letter-spacing:-.012em; max-width:20ch}
+.sec-sub{color:var(--taupe); margin-top:14px; max-width:52ch; font-size:16px}
+
+.logo-row{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-top:clamp(34px,5vh,52px);
+  border-top:1px solid rgba(233,223,198,.09); border-bottom:1px solid rgba(233,223,198,.09)}
+.agent{
+  appearance:none; background:none; border:0; cursor:pointer; font:inherit;
+  display:flex; flex-direction:column; align-items:center; gap:13px;
+  padding:26px 6px 22px; position:relative; color:var(--taupe);
+  transition:color .22s ease;
+}
+.agent + .agent{border-left:1px solid rgba(233,223,198,.07)}
+.agent svg{height:30px; width:auto; fill:currentColor; display:block}
+.agent .lab{font-family:var(--sans); font-size:12.5px; letter-spacing:.01em; color:var(--taupe-dim);
+  transition:color .22s ease; text-align:center}
+.agent:hover{color:var(--ivory)}
+.agent:hover .lab{color:var(--taupe)}
+.agent:focus-visible{outline:2px solid var(--pen-light); outline-offset:-4px; border-radius:3px}
+.agent[aria-pressed="true"]{color:var(--ivory)}
+.agent[aria-pressed="true"] .lab{color:var(--ivory)}
+/* selected: a drawn red caret sits under the mark — a real active state, not a stray dot */
+.agent .sel{position:absolute; left:50%; bottom:-1px; transform:translateX(-50%); width:22px; height:9px;
+  opacity:0; transition:opacity .2s ease}
+.agent .sel path{fill:none; stroke:var(--pen-light); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round}
+.agent[aria-pressed="true"] .sel{opacity:1}
+/* per-mark optical sizing */
+.agent[data-k="copilot"] svg{height:32px}
+.agent[data-k="codex"] svg{height:29px}
+.agent[data-k="opencode"] svg{height:27px}
+
+@media (max-width:760px){
+  .logo-row{grid-template-columns:repeat(3,1fr)}
+  .agent:nth-child(n+4){border-top:1px solid rgba(233,223,198,.07)}
+  .agent:nth-child(3n+1){border-left:0}
+}
+@media (max-width:380px){
+  .logo-row{grid-template-columns:repeat(2,1fr)}
+  .agent:nth-child(2n+1){border-left:0}
+}
+
+/* install panel — updates on selection */
+.install{display:grid; grid-template-columns:1fr auto; gap:22px 40px; align-items:center;
+  margin-top:34px; padding:24px 26px; border-radius:5px;
+  background:linear-gradient(180deg, rgba(233,223,198,.045), rgba(233,223,198,.015));
+  border:1px solid rgba(233,223,198,.08)}
+.install-l{min-width:0}
+.install-name{font-family:var(--serif); font-weight:500; font-size:20px; color:var(--ivory)}
+.install-note{color:var(--taupe); font-size:14.5px; margin-top:3px}
+.pathline{display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap}
+.path{font-family:var(--mono); font-size:14px; color:var(--pen-light);
+  background:rgba(192,64,47,.08); border:1px solid rgba(192,64,47,.22);
+  padding:7px 12px; border-radius:4px; word-break:break-all}
+.copy{appearance:none; background:none; border:0; cursor:pointer; font-family:var(--sans);
+  font-size:13px; color:var(--taupe); display:inline-flex; align-items:center; gap:6px; padding:6px 2px;
+  transition:color .2s}
+.copy:hover{color:var(--ivory)}
+.copy:focus-visible{outline:2px solid var(--pen-light); outline-offset:2px; border-radius:3px}
+.install-r{display:flex; justify-content:flex-end}
+@media (max-width:640px){
+  .install{grid-template-columns:1fr}
+  .install-r{justify-content:flex-start}
+}
+
+/* ============================================================
+   the bespoke action — a stamped control with one chamfered corner.
+   State changes by a clean fill swap, never a lift.
+   ============================================================ */
+.stamp{
+  --pad:16px 24px;
+  appearance:none; cursor:pointer; text-decoration:none; font-family:var(--sans); font-weight:600;
+  display:inline-flex; align-items:center; gap:12px; font-size:16px;
+  padding:var(--pad); color:var(--paper-ink); background:var(--paper-hi);
+  border:0; line-height:1;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  transition:background .2s ease, color .2s ease;
+}
+.stamp .caret{width:.9em; height:.9em}
+.stamp .caret path{stroke:var(--pen)}
+.stamp:hover{background:var(--ivory)}
+.stamp:hover .caret path{stroke:var(--pen)}
+.stamp:focus-visible{outline:2px solid var(--pen-light); outline-offset:3px}
+.stamp.sm{font-size:14.5px; --pad:13px 20px}
+
+/* ============================================================
+   CTA — get the law
+   ============================================================ */
+.cta{position:relative; padding:clamp(70px,11vh,140px) 0;
+  background:linear-gradient(180deg, var(--ink-raised) 0%, var(--ink) 100%)}
+.cta-in{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.85fr); gap:clamp(28px,5vw,72px);
+  align-items:end}
+.cta-h{font-family:var(--serif); font-weight:500; color:var(--ivory);
+  font-size:clamp(34px,5vw,60px); line-height:1.05; letter-spacing:-.015em}
+.cta-h .strike::after{background:var(--pen-light)}
+.cta-side{color:var(--taupe); font-size:16px; max-width:36ch}
+.cta-side .row{margin-top:24px; display:flex; align-items:center; gap:18px; flex-wrap:wrap}
+.cta-size{font-family:var(--mono); font-size:12.5px; letter-spacing:.06em; color:var(--taupe-dim)}
+@media (max-width:820px){ .cta-in{grid-template-columns:1fr; gap:30px; align-items:start} }
+
+/* ============================================================
+   FOOTER — the wordmark anchored flush to the bottom, on top of grain
+   ============================================================ */
+.foot{position:relative; background:var(--ink-floor); padding-top:clamp(56px,8vh,96px);
+  overflow:hidden}
+.foot-top{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);
+  gap:clamp(28px,4vw,56px); align-items:start; padding-bottom:clamp(44px,8vh,92px)}
+.foot-say{font-family:var(--serif); font-size:clamp(21px,2.3vw,29px); color:var(--ivory);
+  max-width:20ch; line-height:1.24}
+.foot-say i{color:var(--pen-light)}
+.foot-group{display:flex; flex-direction:column; gap:9px; font-size:14.5px}
+.foot-label{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--taupe-dim); margin-bottom:3px}
+.foot-group a{color:var(--taupe); text-decoration:none; transition:color .2s;
+  display:inline-flex; align-items:center; gap:9px}
+.foot-group a:hover{color:var(--ivory)}
+.foot-group a svg{width:16px; height:16px; fill:currentColor; flex:none}
+.colophon{font-family:var(--mono); font-size:11px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--taupe-dim); margin-top:6px}
+.foot-mark{position:relative; font-family:var(--wordmark); color:var(--ivory);
+  font-size:clamp(76px,20vw,272px); line-height:.8; letter-spacing:-.012em;
+  margin:0; padding:0 0 0 var(--gutter); transform:translateY(.1em);
+  user-select:none; white-space:nowrap}
+.foot-mark .dot{color:var(--pen)}
+@media (max-width:720px){
+  .foot-top{grid-template-columns:1fr; gap:clamp(26px,5vh,40px)}
+  .foot-say{max-width:24ch}
+}
+
+/* ============================================================
+   reduced motion — nothing depends on motion for legibility
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important; transition:none !important}
+  .strike.arm::after{width:calc(100% + .12em)}
+}
+</style>
+</head>
+
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- real brand marks, kept as symbols and drawn bare (no tiles behind them) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="m-claude" viewBox="0 0 24 24"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></symbol>
+  <symbol id="m-codex" viewBox="0 0 256 260"><path d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z"/></symbol>
+  <symbol id="m-cursor" viewBox="0 0 24 24"><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"/></symbol>
+  <symbol id="m-opencode" viewBox="0 0 24 24"><path d="M22 24H2V0h20zM17 4.8H7v14.4h10z"/></symbol>
+  <symbol id="m-gemini" viewBox="0 0 24 24"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></symbol>
+  <symbol id="m-copilot" viewBox="0 0 24 24"><path d="M23.922 16.997C23.061 18.492 18.063 22.02 12 22.02 5.937 22.02.939 18.492.078 16.997A.641.641 0 0 1 0 16.741v-2.869a.883.883 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.098 10.098 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952C7.255 2.937 9.248 1.98 11.978 1.98c2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.841.841 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256Zm-11.75-5.992h-.344a4.359 4.359 0 0 1-.355.508c-.77.947-1.918 1.492-3.508 1.492-1.725 0-2.989-.359-3.782-1.259a2.137 2.137 0 0 1-.085-.104L4 11.746v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.359 4.359 0 0 1-.355-.508Zm2.328 3.25c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm-5 0c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm3.313-6.185c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z"/></symbol>
+  <symbol id="m-github" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></symbol>
+</svg>
+
+<div class="shell">
+
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top">Unslopify<span class="dot">.</span></a>
+    <div class="nav-right">
+      <span class="nav-meta">The anti-slop law · rev.&nbsp;1</span>
+      <a class="nav-link" href="#agents">Get the file
+        <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-wrap">
+    <h1 class="hero-h1">
+      Make your agent ship<br>
+      <span class="l2"><em>deliberate</em> software.</span>
+    </h1>
+
+    <div class="hero-lower">
+      <p class="hero-note">
+        <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
+        One plain file of ground rules your agent reads before it designs a page or
+        writes a line. So it makes <b>real choices</b> instead of the same gradients,
+        invented numbers, and <span class="strike">powerful, seamless</span> filler.
+        It sits on top of the rules your agent already has. It never fights them.
+      </p>
+
+      <div class="paper-stage">
+      <article class="paper" aria-label="An excerpt of the Unslopify law, marked up">
+        <div class="paper-head"><span>Unslopify · the law</span><span>§ fake specificity</span></div>
+        <div class="paper-body">
+          <p class="rule">A number implies evidence. If it is not evidence, it should
+          not look like evidence.</p>
+          <div class="fakes">
+            <span class="strike">10,482 developers</span>
+            <span class="strike">99.8% accurate</span>
+            <span class="strike">3.2&times; faster</span>
+            <span class="strike">trusted by 14,000 teams</span>
+          </div>
+          <p>Never invent evidence to make a page feel
+          <span class="strike">seamless</span>&nbsp;
+          <span class="ins"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>finished</span>.</p>
+        </div>
+      </article>
+      <span class="marginal">cut it
+        <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
+      </span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="manifesto" aria-labelledby="man-h">
+  <div class="wrap">
+    <div class="man">
+      <h2 class="man-lead" id="man-h">Stop shipping the defaults.</h2>
+      <p class="man-p">AI coding agents are incredibly good at making things that look
+      finished. Give them an empty page and you get a gradient. Give them three features
+      and you get three cards. Ask for credibility and suddenly there are 10,000 users,
+      42% faster workflows, and a testimonial from someone who may or may not exist.</p>
+      <p class="man-em">That isn't intelligence. It's <span class="pen">pattern completion</span>.</p>
+      <p class="man-p"><b>Unslopify</b> is a set of rules for making AI-generated software
+      more deliberate. It teaches coding agents to question the obvious default, avoid
+      invented claims, keep interfaces coherent, write like an actual product team, and
+      stop when the problem is solved. It works alongside the agents you already use
+      instead of trying to replace them.</p>
+
+      <div class="man-beat">
+        <h2 class="man-lead">AI doesn't need to stop writing code. It needs better judgment.</h2>
+        <p class="man-p">The problem isn't that AI makes software. The problem is what
+        happens when it has an unanswered design or engineering decision and fills the
+        gap with the most familiar pattern it has seen.</p>
+        <ul class="becomes">
+          <li>A blank section becomes <span class="strike">a feature grid</span>.</li>
+          <li>A lack of metrics becomes <span class="strike">three impressive-looking numbers</span>.</li>
+          <li>An empty background becomes <span class="strike">a purple gradient</span>.</li>
+          <li>A missing product detail becomes <span class="strike">marketing copy</span>.</li>
+          <li>A small bug becomes <span class="strike">an excuse for a complete refactor</span>.</li>
+        </ul>
+        <p class="man-em">Unslopify exists to interrupt that process.</p>
+      </div>
+
+      <div class="man-beat">
+        <h2 class="man-lead">Not everything needs to be more.</h2>
+        <p class="man-p">A good interface doesn't need twelve sections. A good codebase
+        doesn't need another abstraction. A good landing page doesn't need another
+        testimonial, another statistic, another glowing orb, or another button telling
+        you to get started.</p>
+        <p class="man-p">Unslopify asks a simpler question:</p>
+        <p class="why">Why does this exist?</p>
+        <div class="branch">
+          <p class="keep"><svg class="caret mk" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>If the answer is because it helps the user, solves a real problem, communicates something important, or makes the software meaningfully better, <b>keep it</b>.</p>
+          <p class="drop"><svg class="caret mk" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>If the answer is because the page looked empty, the AI thought it was expected, or the code felt like it needed to be "more scalable," <b>reconsider it</b>.</p>
+        </div>
+      </div>
+
+      <div class="man-beat">
+        <h2 class="man-lead">The goal isn't to make AI-generated software look human.</h2>
+        <p class="man-em">It's to make it look <span class="pen">intentional</span>.</p>
+        <p class="man-p">That means real numbers instead of invented ones. Specific copy
+        instead of "powerful, seamless, next-generation" filler. Consistent systems instead
+        of individually polished components that don't belong together. Functional controls
+        instead of screenshots pretending to be applications. Small, justified changes
+        instead of endless refactors.</p>
+        <p class="man-p">And sometimes the most correct decision is to do nothing. When the
+        requested problem is solved, the tests pass, the interface works, the result is
+        coherent, and there is nothing concrete left to fix, the agent should stop.</p>
+        <p class="man-close">That's Unslopify.</p>
+        <p class="man-tag">Not anti-AI. Not anti-design. Not anti-automation.<br>
+        <span class="anti">Just anti-default.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="agents" id="agents" aria-labelledby="agents-h">
+  <div class="wrap">
+    <h2 class="sec-lead" id="agents-h">Drop it in the file your agent already reads.</h2>
+    <p class="sec-sub">Same law, formatted for how each agent loads its instructions. Pick yours.</p>
+
+    <div class="logo-row" role="group" aria-label="Choose your coding agent">
+      <button class="agent" data-k="claude" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-claude"/></svg>
+        <span class="lab">Claude Code</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="codex" aria-pressed="false">
+        <svg viewBox="0 0 256 260" aria-hidden="true"><use href="#m-codex"/></svg>
+        <span class="lab">Codex</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="cursor" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-cursor"/></svg>
+        <span class="lab">Cursor</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="opencode" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-opencode"/></svg>
+        <span class="lab">opencode</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="gemini" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-gemini"/></svg>
+        <span class="lab">Gemini CLI</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="copilot" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-copilot"/></svg>
+        <span class="lab">GitHub Copilot</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+    </div>
+
+    <div class="install" aria-live="polite">
+      <div class="install-l">
+        <div class="install-name" id="ins-name">Claude Code</div>
+        <div class="install-note" id="ins-note">Repo root. Read at the start of every session.</div>
+        <div class="pathline">
+          <code class="path" id="ins-path">CLAUDE.md</code>
+          <button class="copy" id="ins-copy" type="button">
+            <svg class="caret" viewBox="0 0 24 24" aria-hidden="true" style="width:.9em;height:.9em"><path d="M4 17 L12 7 L20 17"/></svg>
+            <span id="ins-copy-t">Copy path</span>
+          </button>
+        </div>
+      </div>
+      <div class="install-r">
+        <a class="stamp sm" id="ins-dl" href="integrations/claude-code/CLAUDE.md" download="CLAUDE.md">
+          Download for Claude Code
+          <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="get" aria-labelledby="cta-h">
+  <div class="wrap cta-in">
+    <h2 class="cta-h" id="cta-h">Take the <span class="strike">seamless</span> file that ends the slop.</h2>
+    <div class="cta-side">
+      <p>The whole law, as one plain-text file. Read it, change it, or hand it straight to your agent.</p>
+      <div class="row">
+        <a class="stamp" href="unslopify.md" download="unslopify.md">
+          Download unslopify.md
+          <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
+        </a>
+        <span class="cta-size" id="dl-size">one file · plain text</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <p class="foot-say">Not a linter. Not a theme. A set of <i>ground rules</i> your agent will actually read.</p>
+      <div class="foot-group">
+        <div class="foot-label">Get the file</div>
+        <a href="integrations/claude-code/CLAUDE.md" download="CLAUDE.md">Claude Code · CLAUDE.md</a>
+        <a href="integrations/codex/AGENTS.md" download="AGENTS.md">Codex · AGENTS.md</a>
+        <a href="integrations/cursor/.cursor/rules/unslopify.mdc" download="unslopify.mdc">Cursor · .cursor/rules</a>
+        <a href="integrations/opencode/AGENTS.md" download="AGENTS.md">opencode · AGENTS.md</a>
+        <a href="integrations/gemini-cli/GEMINI.md" download="GEMINI.md">Gemini CLI · GEMINI.md</a>
+        <a href="integrations/github-copilot/.github/copilot-instructions.md" download="copilot-instructions.md">GitHub Copilot · .github</a>
+      </div>
+      <div class="foot-group">
+        <div class="foot-label">Source</div>
+        <a href="https://github.com/TaxCollector23/unslopify" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-github"/></svg>View on GitHub</a>
+        <a href="unslopify.md" download="unslopify.md">Download the raw law</a>
+        <div class="colophon">Use it · change it · ship it</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot-mark" aria-hidden="true">Unslopify<span class="dot">.</span></div>
+</footer>
+
+</div><!-- /shell -->
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* --- strike draws: content is visible by default; only the red line animates --- */
+  function drawStrikes(scope){
+    var els = scope.querySelectorAll('.strike');
+    els.forEach(function(el){
+      if(el.dataset.drawn) return;
+      el.dataset.drawn = '1';
+      if(reduce) return;                 // reduced motion: line already full via CSS
+      el.classList.add('arm');           // collapse to 0
+      // force reflow, then release on next frame -> width transitions 0 -> full
+      void el.offsetWidth;
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){ el.classList.remove('arm'); });
+      });
+    });
+  }
+  // hero strikes draw shortly after load
+  window.addEventListener('load', function(){ setTimeout(function(){ drawStrikes(document.querySelector('.hero')); }, 260); });
+
+  // section strikes draw when scrolled into view (fallback: visible regardless)
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ drawStrikes(e.target); io.unobserve(e.target); } });
+    }, {threshold:.35});
+    document.querySelectorAll('.agents, .cta, .paper').forEach(function(s){ io.observe(s); });
+  } else {
+    drawStrikes(document);
+  }
+
+  /* --- agent install selector (real, working control) --- */
+  var AGENTS = {
+    claude:  {name:'Claude Code',   note:'Repo root. Read at the start of every session.',        path:'CLAUDE.md',                              href:'integrations/claude-code/CLAUDE.md',                              file:'CLAUDE.md'},
+    codex:   {name:'Codex',         note:'Repo root. Codex reads it automatically.',              path:'AGENTS.md',                              href:'integrations/codex/AGENTS.md',                                    file:'AGENTS.md'},
+    cursor:  {name:'Cursor',        note:'A project rule, always applied via its frontmatter.',   path:'.cursor/rules/unslopify.mdc',            href:'integrations/cursor/.cursor/rules/unslopify.mdc',                 file:'unslopify.mdc'},
+    opencode:{name:'opencode',      note:'Repo root, or the instructions list in opencode.json.', path:'AGENTS.md',                              href:'integrations/opencode/AGENTS.md',                                 file:'AGENTS.md'},
+    gemini:  {name:'Gemini CLI',    note:'Repo root. Loaded as project context.',                 path:'GEMINI.md',                              href:'integrations/gemini-cli/GEMINI.md',                               file:'GEMINI.md'},
+    copilot: {name:'GitHub Copilot',note:'Applied to every Copilot request in the repo.',         path:'.github/copilot-instructions.md',        href:'integrations/github-copilot/.github/copilot-instructions.md',     file:'copilot-instructions.md'}
+  };
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.agent'));
+  var elName = document.getElementById('ins-name');
+  var elNote = document.getElementById('ins-note');
+  var elPath = document.getElementById('ins-path');
+  var elDl   = document.getElementById('ins-dl');
+  var elCopyT= document.getElementById('ins-copy-t');
+
+  function select(k){
+    var a = AGENTS[k]; if(!a) return;
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.k===k ? 'true':'false'); });
+    elName.textContent = a.name;
+    elNote.textContent = a.note;
+    elPath.textContent = a.path;
+    elDl.setAttribute('href', a.href);
+    elDl.setAttribute('download', a.file);
+    elDl.childNodes[0].nodeValue = 'Download for ' + a.name + ' ';
+    elCopyT.textContent = 'Copy path';
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ select(b.dataset.k); }); });
+
+  /* copy path */
+  var copyBtn = document.getElementById('ins-copy');
+  copyBtn.addEventListener('click', function(){
+    var txt = elPath.textContent;
+    var done = function(){ elCopyT.textContent='Copied'; setTimeout(function(){ elCopyT.textContent='Copy path'; },1400); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done, done); }
+    else { done(); }
+  });
+
+  /* quiet parallax on the paper — an already-visible element, gated by reduced motion */
+  if(!reduce){
+    var paper = document.querySelector('.paper');
+    var hero = document.querySelector('.hero');
+    var ticking = false;
+    window.addEventListener('scroll', function(){
+      if(ticking) return; ticking = true;
+      requestAnimationFrame(function(){
+        var r = hero.getBoundingClientRect();
+        if(r.bottom > 0 && r.top < window.innerHeight){
+          var y = Math.max(-24, Math.min(24, (r.top) * -0.03));
+          paper.style.setProperty('--py', y.toFixed(1)+'px');
+          paper.style.transform = 'translateY(calc(-50% + ' + y.toFixed(1) + 'px)) rotate(-1.7deg)';
+        }
+        ticking = false;
+      });
+    }, {passive:true});
+  }
+
+  /* honest, verifiable file size on the CTA (no invented metric) */
+  fetch('unslopify.md', {method:'HEAD'}).then(function(r){
+    var len = r.headers.get('content-length');
+    if(len){ var kb = Math.round(parseInt(len,10)/1024); document.getElementById('dl-size').textContent = 'one file · plain text · ' + kb + ' kb'; }
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
