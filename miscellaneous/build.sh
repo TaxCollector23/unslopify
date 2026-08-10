@@ -2,7 +2,9 @@
 # Regenerate the per-agent integration files from unslopify.md.
 # Each output = an agent-specific header + the full law inline.
 set -euo pipefail
-cd "$(dirname "$0")"
+# run from repo root regardless of where the script lives
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
 LAW=unslopify.md
 mkdir -p docs/integrations/claude-code docs/integrations/codex \
