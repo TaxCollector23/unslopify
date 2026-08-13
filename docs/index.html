@@ -462,6 +462,66 @@ h1,h2,h3,p{margin:0}
   </div>
 </header>
 
+<section class="agents" id="agents" aria-labelledby="agents-h">
+  <div class="wrap">
+    <h2 class="sec-lead" id="agents-h">Drop it in the file your agent already reads.</h2>
+    <p class="sec-sub">Same law, formatted for how each agent loads its instructions. Pick yours.</p>
+
+    <div class="logo-row" role="group" aria-label="Choose your coding agent">
+      <button class="agent" data-k="claude" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-claude"/></svg>
+        <span class="lab">Claude Code</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="codex" aria-pressed="false">
+        <svg viewBox="0 0 256 260" aria-hidden="true"><use href="#m-codex"/></svg>
+        <span class="lab">Codex</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="cursor" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-cursor"/></svg>
+        <span class="lab">Cursor</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="opencode" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-opencode"/></svg>
+        <span class="lab">opencode</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="gemini" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-gemini"/></svg>
+        <span class="lab">Gemini CLI</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+      <button class="agent" data-k="copilot" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-copilot"/></svg>
+        <span class="lab">GitHub Copilot</span>
+        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
+      </button>
+    </div>
+
+    <div class="install" aria-live="polite">
+      <div class="install-l">
+        <div class="install-name" id="ins-name">Claude Code</div>
+        <div class="install-note" id="ins-note">Repo root. Read at the start of every session.</div>
+        <div class="pathline">
+          <code class="path" id="ins-path">CLAUDE.md</code>
+          <button class="copy" id="ins-copy" type="button">
+            <svg class="caret" viewBox="0 0 24 24" aria-hidden="true" style="width:.9em;height:.9em"><path d="M4 17 L12 7 L20 17"/></svg>
+            <span id="ins-copy-t">Copy path</span>
+          </button>
+        </div>
+      </div>
+      <div class="install-r">
+        <a class="stamp sm" id="ins-dl" href="integrations/claude-code/CLAUDE.md" download="CLAUDE.md">
+          Download for Claude Code
+          <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="manifesto" aria-labelledby="man-h">
   <div class="wrap">
     <div class="man">
@@ -520,66 +580,6 @@ h1,h2,h3,p{margin:0}
         <p class="man-close">That's Unslopify.</p>
         <p class="man-tag">Not anti-AI. Not anti-design. Not anti-automation.<br>
         <span class="anti">Just anti-default.</span></p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="agents" id="agents" aria-labelledby="agents-h">
-  <div class="wrap">
-    <h2 class="sec-lead" id="agents-h">Drop it in the file your agent already reads.</h2>
-    <p class="sec-sub">Same law, formatted for how each agent loads its instructions. Pick yours.</p>
-
-    <div class="logo-row" role="group" aria-label="Choose your coding agent">
-      <button class="agent" data-k="claude" aria-pressed="true">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-claude"/></svg>
-        <span class="lab">Claude Code</span>
-        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
-      </button>
-      <button class="agent" data-k="codex" aria-pressed="false">
-        <svg viewBox="0 0 256 260" aria-hidden="true"><use href="#m-codex"/></svg>
-        <span class="lab">Codex</span>
-        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
-      </button>
-      <button class="agent" data-k="cursor" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-cursor"/></svg>
-        <span class="lab">Cursor</span>
-        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
-      </button>
-      <button class="agent" data-k="opencode" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-opencode"/></svg>
-        <span class="lab">opencode</span>
-        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
-      </button>
-      <button class="agent" data-k="gemini" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-gemini"/></svg>
-        <span class="lab">Gemini CLI</span>
-        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
-      </button>
-      <button class="agent" data-k="copilot" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#m-copilot"/></svg>
-        <span class="lab">GitHub Copilot</span>
-        <svg class="sel" viewBox="0 0 24 10" aria-hidden="true"><path d="M3 8 L12 2 L21 8"/></svg>
-      </button>
-    </div>
-
-    <div class="install" aria-live="polite">
-      <div class="install-l">
-        <div class="install-name" id="ins-name">Claude Code</div>
-        <div class="install-note" id="ins-note">Repo root. Read at the start of every session.</div>
-        <div class="pathline">
-          <code class="path" id="ins-path">CLAUDE.md</code>
-          <button class="copy" id="ins-copy" type="button">
-            <svg class="caret" viewBox="0 0 24 24" aria-hidden="true" style="width:.9em;height:.9em"><path d="M4 17 L12 7 L20 17"/></svg>
-            <span id="ins-copy-t">Copy path</span>
-          </button>
-        </div>
-      </div>
-      <div class="install-r">
-        <a class="stamp sm" id="ins-dl" href="integrations/claude-code/CLAUDE.md" download="CLAUDE.md">
-          Download for Claude Code
-          <svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17 L12 7 L20 17"/></svg>
-        </a>
       </div>
     </div>
   </div>
